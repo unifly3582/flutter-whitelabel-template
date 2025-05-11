@@ -370,6 +370,38 @@ The checkout process has been updated to save order details to Firestore and pro
 8.  If `OrderConfirmationPage` is implemented, verify it displays correctly with the order ID.
 9.  Test Firestore security rules by attempting (e.g., through browser console or another tool if possible) to read/write orders that don't belong to the logged-in user, or to create an order with an incorrect `userId`. These attempts should fail.
 
+### 3.3. User Profile & Order History Page
+
+A new page has been added to allow logged-in users to view their basic profile information and their past order history.
+
+*   **Implemented In:**
+    *   `src/pages/ProfilePage.jsx`:
+        *   Fetches orders from the `orders` Firestore collection specifically for the `currentUser.uid`.
+        *   The query filters by `userId` and orders results by `createdAt` timestamp in descending order.
+        *   Displays basic user information (phone number, email if available, UID).
+        *   Lists the fetched orders in a table format, showing Order ID, Date, Status, and Total Amount (if available in order data).
+        *   Includes loading states and error handling for the order fetching process.
+    *   `src/App.jsx`:
+        *   A new route `/profile` has been added.
+        *   This route is protected using `ProtectedRoute` and uses `PageLayout` to include the Navbar.
+    *   `src/components/layout/Navbar.jsx`:
+        *   A "My Profile" link is added to the navbar, visible only to authenticated users, leading to the `/profile` page.
+*   **Firestore Interaction:**
+    *   **Query:** Makes a Firestore query to `orders` collection: `query(collection(db, 'orders'), where('userId', '==', currentUser.uid), orderBy('createdAt', 'desc'))`.
+    *   **Index Requirement:** This type of query (filtering on one field, ordering on another) requires a composite index in Firestore.
+        *   **Action during setup/testing:** If Firestore throws an error in the browser console stating "The query requires an index..." it will provide a direct link to create the necessary composite index (e.g., on `orders` collection for fields `userId ASC, createdAt DESC`). The developer/admin must create this index via the Firebase Console for the page to function correctly. The `firestore.indexes.json` file can be updated if you want to include this index definition in your template for future deployments, but index creation via console link is usually straightforward for initial setup.
+    *   **Security Rules:** The existing Firestore security rules for the `orders` collection (`allow read: if request.auth != null && resource.data.userId == request.auth.uid;`) already permit users to read their own orders.
+
+**How to Test User Profile & Order History:**
+1.  Ensure you are logged in.
+2.  (If first time testing this feature) Place one or more orders through the Checkout page.
+3.  Click the "My Profile" link in the Navbar.
+4.  Verify that the Profile page loads and displays your correct user information.
+5.  Verify that your previously placed orders are listed in the table. Check if the displayed information (Order ID, Date, Status) is accurate.
+6.  (If no orders placed) Verify that a "You haven't placed any orders yet." message is shown.
+7.  If you encounter a Firestore error about a missing index, use the link provided in the browser console error message to create the composite index in your Firebase project's Firestore settings. After the index is built (a few minutes), refresh the Profile page.
+8.  Log out and attempt to access `/profile` directly. You should be redirected to `/login`.
+
 ## Client Deployment Checklist
 
 This checklist outlines the essential steps to configure and deploy a new, customized instance of this whitelabel application for a specific client.
