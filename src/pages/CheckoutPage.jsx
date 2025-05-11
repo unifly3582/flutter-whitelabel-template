@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext.jsx';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { db } from '../../firebase';
 // import { useNavigate } from 'react-router-dom'; // We'll add routing later
 
 const CheckoutPage = () => {
@@ -15,6 +17,7 @@ const CheckoutPage = () => {
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationError, setLocationError] = useState('');
   const [orderMessage, setOrderMessage] = useState(''); // For success/error messages
+  const [isSubmittingOrder, setIsSubmittingOrder] = useState(false); // For loading state on submit button
 
   // Pre-fill email if user is logged in and has an email (phone auth users might not)
   useEffect(() => {
@@ -72,15 +75,53 @@ const CheckoutPage = () => {
     );
   };
 
-  const handleSubmitOrder = (e) => {
+  const handleSubmitOrder = async (e) => {
     e.preventDefault();
-    setOrderMessage('');
-    if (!formData.name || !formData.fullAddress || !formData.pincode) {
+    setOrderMessage(''); // Clear previous messages
+    setLocationError(''); // Clear location errors
+
+    // Basic validation
+    if (!formData.name.trim() || !formData.fullAddress.trim() || !formData.pincode.trim()) {
       setOrderMessage('Error: Please fill in all required fields (Name, Full Address, Pincode).');
+      window.scrollTo(0, 0);
       return;
     }
-    console.log('Order Data Submitted:', { ...formData, userId: currentUser?.uid });
-    setOrderMessage(`Success: Order submitted (logged to console): ${JSON.stringify(formData)}`);
+    if (!currentUser || !currentUser.uid) {
+      setOrderMessage('Error: User not authenticated. Please log in again.');
+      window.scrollTo(0, 0);
+      return;
+    }
+
+    setIsSubmittingOrder(true);
+
+    const orderData = {
+      userId: currentUser.uid,
+      userName: formData.name.trim(),
+      userEmail: formData.email.trim() || null,
+      phoneNumber: currentUser.phoneNumber,
+      shippingAddress: {
+        name: formData.name.trim(),
+        fullAddress: formData.fullAddress.trim(),
+        pincode: formData.pincode.trim(),
+      },
+      items: [],
+      totalAmount: 0,
+      status: 'pending',
+      createdAt: serverTimestamp(),
+    };
+
+    try {
+      const docRef = await addDoc(collection(db, 'orders'), orderData);
+      console.log('Order placed successfully with ID: ', docRef.id);
+      setOrderMessage(`Success! Your order has been placed. Order ID: ${docRef.id}`);
+      setFormData({ name: '', email: '', fullAddress: '', pincode: '' });
+    } catch (error) {
+      console.error('Error placing order: ', error);
+      setOrderMessage(`Error: Could not place your order. ${error.message}`);
+    } finally {
+      setIsSubmittingOrder(false);
+      window.scrollTo(0, 0);
+    }
   };
 
   if (!currentUser) {
@@ -187,9 +228,20 @@ const CheckoutPage = () => {
           <div className="pt-4">
             <button
               type="submit"
-              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-lg text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              disabled={isSubmittingOrder || locationLoading}
+              className="w-full flex items-center justify-center py-3 px-4 border border-transparent rounded-md shadow-lg text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
             >
-              Place Order (Logs to Console for now)
+              {isSubmittingOrder ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Placing Order...
+                </>
+              ) : (
+                'Place Order'
+              )}
             </button>
           </div>
         </form>
