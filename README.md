@@ -321,4 +321,51 @@ The primary backend for this application template is Firebase. Generalization of
 3.  The frontend application is configured with the client's Firebase project SDK keys via environment variables (for the `VITE_FIREBASE_...` settings).
 4.  Secure `firestore.rules` (and `storage.rules`) from the template are deployed to the client's Firebase project.
 5.  `firestore.indexes.json` (if any) from the template is deployed.
-6.  (If using Functions) Any necessary Function environment configurations are set for the client's project. 
+6.  (If using Functions) Any necessary Function environment configurations are set for the client's project.
+
+## Phase 3: Core Feature Enhancement & Deployment Prep
+
+### 3.1. Saving Orders to Firestore
+
+The checkout process has been updated to save order details to Firestore and provide user feedback.
+
+*   **Implemented In:**
+    *   `src/pages/CheckoutPage.jsx`:
+        *   The `handleSubmitOrder` function is now `async`.
+        *   It constructs an `orderData` object containing `userId`, customer details, shipping address (from form data), phone number (from `currentUser`), initial `status: 'pending'`, placeholders for `items` and `totalAmount`, and a Firebase `serverTimestamp()` for `createdAt`.
+        *   Uses `addDoc(collection(db, "orders"), orderData)` from the Firebase Firestore SDK to save the new order to an `orders` collection. `addDoc` automatically generates a unique document ID.
+        *   Includes a loading state (`isSubmittingOrder`) for the "Place Order" button.
+        *   Provides success/error messages to the user on the page or navigates to an order confirmation page.
+        *   Basic client-side validation for required fields (name, address, pincode).
+    *   `src/pages/OrderConfirmationPage.jsx` (Optional but Recommended):
+        *   A new page to display a success message to the user after an order is placed.
+        *   Can display the `orderId` if passed via URL parameters.
+    *   `src/App.jsx`:
+        *   If `OrderConfirmationPage` is implemented, a route (e.g., `/order-confirmation/:orderId`) is added for it, typically as a protected route.
+    *   `firestore.rules`:
+        *   Updated to include rules for the `orders` collection. These rules typically:
+            *   Allow authenticated users to `create` orders for themselves (i.e., `request.resource.data.userId == request.auth.uid`).
+            *   Enforce an initial `status` (e.g., 'pending') on creation.
+            *   May include validation for the presence of required fields in the order data.
+            *   Allow authenticated users to `read` and `update` only their own orders.
+            *   Disallow `delete` operations on orders (preferring status changes like 'cancelled').
+
+*   **Firestore Collection:** `orders` (A new top-level collection in Firestore).
+
+*   **User Feedback:**
+    *   The "Place Order" button shows a loading/submitting state.
+    *   Success or error messages are displayed on the `CheckoutPage`, or the user is navigated to an `OrderConfirmationPage`.
+
+**How to Test Order Saving:**
+1.  Ensure your Firestore security rules (`firestore.rules`) have been deployed to your Firebase project (`firebase deploy --only firestore:rules`).
+2.  Log in to the application.
+3.  Navigate to the `/checkout` page.
+4.  Fill in all required form fields.
+5.  Click the "Place Order" button.
+6.  Observe UI feedback (loading state, messages, or redirection to order confirmation).
+7.  Check the Firebase Console -> Firestore Database.
+    *   An `orders` collection should now exist (if it's the first order).
+    *   A new document should be present in the `orders` collection with an auto-generated ID.
+    *   Verify that the document data matches the information you entered, including `userId`, `createdAt` timestamp, and `status: 'pending'`.
+8.  If `OrderConfirmationPage` is implemented, verify it displays correctly with the order ID.
+9.  Test Firestore security rules by attempting (e.g., through browser console or another tool if possible) to read/write orders that don't belong to the logged-in user, or to create an order with an incorrect `userId`. These attempts should fail. 
