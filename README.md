@@ -368,4 +368,137 @@ The checkout process has been updated to save order details to Firestore and pro
     *   A new document should be present in the `orders` collection with an auto-generated ID.
     *   Verify that the document data matches the information you entered, including `userId`, `createdAt` timestamp, and `status: 'pending'`.
 8.  If `OrderConfirmationPage` is implemented, verify it displays correctly with the order ID.
-9.  Test Firestore security rules by attempting (e.g., through browser console or another tool if possible) to read/write orders that don't belong to the logged-in user, or to create an order with an incorrect `userId`. These attempts should fail. 
+9.  Test Firestore security rules by attempting (e.g., through browser console or another tool if possible) to read/write orders that don't belong to the logged-in user, or to create an order with an incorrect `userId`. These attempts should fail.
+
+## Client Deployment Checklist
+
+This checklist outlines the essential steps to configure and deploy a new, customized instance of this whitelabel application for a specific client.
+
+**I. Pre-Deployment Preparations:**
+
+1.  **[ ] Client Consultation & Asset Gathering:**
+    *   Obtain client's branding guidelines: Logo (SVG/PNG), primary/secondary/accent colors, preferred fonts.
+    *   Gather client-specific content: App name, homepage headline/subheadline/CTA text, any other custom text needed.
+    *   Determine if a specific homepage layout variant is required (if multiple are available).
+
+2.  **[ ] Your Template Codebase:**
+    *   Ensure your main whitelabel template codebase is up-to-date, stable, and version-controlled (e.g., in your primary Git repository).
+    *   Consider creating a new branch in your template repo for this client's initial setup if you anticipate significant template-level changes before merging back, or simply clone/copy the template to a new directory for this client's specific deployment.
+
+**II. Client-Specific Firebase Project Setup:**
+
+3.  **[ ] Create New Firebase Project for Client:**
+    *   Go to the [Firebase Console](https://console.firebase.google.com/).
+    *   Create a **new Firebase project** dedicated solely to this client (e.g., `clientname-app-prod`).
+    *   Record the **Project ID** and other SDK configuration details.
+    *   Upgrade this new Firebase project to the **Blaze (pay-as-you-go) plan** to enable features like Phone Authentication.
+
+4.  **[ ] Enable Firebase Services in Client's Project:**
+    *   **Authentication:**
+        *   Enable the "Phone" sign-in method.
+        *   Under "Settings", add `localhost` to **Authorized domains** (for your testing during client setup). Later, Firebase Hosting domains are auto-authorized.
+        *   (Optional) Add any specific test phone numbers requested by the client for their UAT.
+    *   **Firestore Database:**
+        *   Create a Firestore database.
+        *   Choose the appropriate region.
+        *   Start in **Test Mode** initially *only for setup convenience if absolutely necessary*, but plan to apply secure rules immediately.
+    *   **Firebase Hosting:**
+        *   "Get started" with Firebase Hosting.
+    *   **Cloud Functions (If applicable):**
+        *   Ensure Node.js version compatibility if you deploy functions.
+    *   **Storage (If applicable):**
+        *   Enable Firebase Storage if the client's app will use it.
+
+5.  **[ ] Get Firebase SDK Configuration for Client's Web App:**
+    *   In the client's Firebase project settings (General tab), find or add a Web App.
+    *   Copy the `firebaseConfig` object (apiKey, authDomain, projectId, etc.).
+
+**III. Codebase Customization & Configuration (for this specific client deployment):**
+
+6.  **[ ] Prepare Client's Codebase Instance:**
+    *   If not done in step 2, clone/copy your main template codebase to a new local directory dedicated to this client.
+    *   Initialize Git in this new directory if it's a fresh copy not linked to your main template repo, or work on a client-specific branch if preferred.
+
+7.  **[ ] Configure Environment Variables:**
+    *   In the client's codebase directory, create/update the `.env.production` (or `.env.local` for testing connection to client's Firebase) file.
+    *   Populate it with the **client's specific Firebase SDK configuration values** (from step 5), prefixed with `VITE_FIREBASE_`. Example:
+        ```env
+        VITE_FIREBASE_API_KEY="CLIENTS_API_KEY"
+        VITE_FIREBASE_AUTH_DOMAIN="clients-project-id.firebaseapp.com"
+        # ... and all other VITE_FIREBASE_ variables
+        ```
+    *   *(Note: For Firebase Hosting deployments, these `VITE_` variables can often be set directly in the Hosting environment settings instead of relying on a committed `.env.production` file, which is more secure).*
+
+8.  **[ ] Customize Theme (`src/config/theme.js`):**
+    *   Update `appName` (if it's the primary source for display name).
+    *   Update `logoUrl` to point to the client's logo (e.g., `/client-logo.png`). Place the client's logo file in the `public/` directory.
+    *   Set `colors` (primary, secondary, accent, background, textPrimary, etc.) according to client's branding.
+    *   Set `fontFamily` values (ensure the chosen fonts are linked in `public/index.html` or otherwise loaded).
+    *   Adjust `borderRadius` or other theme properties as needed.
+
+9.  **[ ] Customize Content (`src/config/content.js`):**
+    *   Update `appName` if distinct from `theme.js`.
+    *   Update `homePage.headline`, `subheadline`, `ctaButtonText`.
+    *   Update any other client-specific text strings throughout the application config.
+
+10. **[ ] Select Layouts (`src/config/layoutConfig.js`):**
+    *   If different layout variants are available and desired, update `homePageVariant` (and any other page variants) to the client's preferred layout key.
+
+**IV. Backend Deployment to Client's Firebase Project:**
+
+11. **[ ] Firebase CLI Setup for Client Project:**
+    *   Open a terminal in the client's codebase directory.
+    *   Log in to Firebase CLI: `firebase login` (ensure you're using an account with access to the client's Firebase project).
+    *   Associate the local project with the client's Firebase project: `firebase use --add`, then select the client's Project ID and give it an alias (e.g., `clientname-prod`). Or, if already aliased, `firebase use clientname-prod`.
+    *   (Alternatively) Modify `.firebaserc`'s `default` project to the client's project ID for this deployment instance if not using aliases.
+
+12. **[ ] Deploy Firebase Rules:**
+    *   Copy/ensure your template's `firestore.rules` and `storage.rules` are in the client's codebase root. **Critically review these rules for security before deploying to a client's production environment.**
+    *   Deploy Firestore rules: `firebase deploy --only firestore:rules`
+    *   Deploy Storage rules (if using Storage): `firebase deploy --only storage:rules`
+
+13. **[ ] Deploy Firestore Indexes:**
+    *   Copy/ensure `firestore.indexes.json` is present.
+    *   Deploy indexes: `firebase deploy --only firestore:indexes`
+
+14. **[ ] Deploy Cloud Functions (If applicable):**
+    *   If your template uses Cloud Functions:
+        *   Navigate to the functions directory (e.g., `cd functions`).
+        *   Install dependencies (`npm install`).
+        *   Set any client-specific function environment configurations:
+            `firebase functions:config:set service.key="CLIENT_KEY" other.setting="VALUE"`
+        *   Deploy functions: `firebase deploy --only functions` (from project root, or navigate back with `cd ..`).
+
+**V. Frontend Application Build & Deployment:**
+
+15. **[ ] Install Frontend Dependencies:**
+    *   In the client's codebase root, run `npm install` (or `yarn install`).
+
+16. **[ ] Build for Production:**
+    *   Run `npm run build`. This will generate the static production assets in the `dist/` folder (or as configured in `firebase.json`'s `hosting.public` and Vite's `build.outDir`).
+
+17. **[ ] Deploy to Firebase Hosting:**
+    *   Run `firebase deploy --only hosting`.
+    *   Note the Hosting URL provided after deployment.
+
+**VI. Post-Deployment & Testing:**
+
+18. **[ ] Thorough Testing on Client's Instance:**
+    *   Access the client's live URL.
+    *   Test ALL application features comprehensively:
+        *   OTP Login/Logout.
+        *   User data creation (if applicable, like profiles).
+        *   Checkout process & Order placement.
+        *   Verify order data in the client's Firestore.
+        *   Confirm theme, logo, and content match client's specifications.
+        *   Test on different devices/browsers for responsiveness.
+        *   Check all navigation links and protected routes.
+
+19. **[ ] Custom Domain (Optional):**
+    *   If the client has a custom domain, configure it in their Firebase Hosting settings.
+
+20. **[ ] Handover & Documentation:**
+    *   Provide the client with necessary access or links.
+    *   Document any client-specific configurations or operational notes.
+
+This checklist should be treated as a living document and updated as the template application evolves. 
