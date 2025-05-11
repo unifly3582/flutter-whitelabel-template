@@ -7,6 +7,7 @@ import ProtectedRoute from './components/common/ProtectedRoute.jsx';
 import useThemeApplier from './hooks/useThemeApplier.js';
 import { useAuth } from './contexts/AuthContext.jsx';
 import OrderConfirmationPage from './pages/OrderConfirmationPage.jsx';
+import ProfilePage from './pages/ProfilePage.jsx';
 import './App.css';
 import { layoutConfig } from './config/layoutConfig.js';
 
@@ -59,6 +60,16 @@ function App() {
               <ProtectedRoute>
                 <PageLayout>
                   <CheckoutPage />
+                </PageLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <PageLayout>
+                  <ProfilePage />
                 </PageLayout>
               </ProtectedRoute>
             }

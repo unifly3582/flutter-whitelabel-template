@@ -48,6 +48,12 @@ const Navbar = () => {
             {currentUser ? (
               <>
                 <Link
+                  to="/profile"
+                  className="px-3 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:bg-indigo-700"
+                >
+                  My Profile
+                </Link>
+                <Link
                   to="/checkout"
                   className="px-3 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:bg-indigo-700"
                 >
