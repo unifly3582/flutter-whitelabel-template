@@ -1,6 +1,6 @@
 import React from 'react';
-import { useAuth } from '../contexts/AuthContext.jsx';
-import { contentConfig } from '../config/content.js';
+import { useAuth } from '../../contexts/AuthContext.jsx';
+import { contentConfig } from '../../config/content.js';
 
 const HomePage = () => {
   const { currentUser } = useAuth();
