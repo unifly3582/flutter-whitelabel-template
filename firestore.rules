@@ -10,12 +10,18 @@ service cloud.firestore {
     // Example for 'orders' collection
     // Users can create orders for themselves, and only read/update their own orders
     match /orders/{orderId} {
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid
-                      // Add further validation, e.g., required fields, status
-                      && request.resource.data.status == 'pending'; 
+      // Only authenticated users can create their own orders with required fields
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.shippingAddress != null
+        && request.resource.data.shippingAddress.name != null
+        && request.resource.data.shippingAddress.fullAddress != null
+        && request.resource.data.shippingAddress.pincode != null
+        && request.resource.data.createdAt != null;
+      // Users can read or update their own orders
       allow read, update: if request.auth != null && resource.data.userId == request.auth.uid;
-      // Generally, disallow delete for orders; use a status field (e.g., 'cancelled') instead.
-      // allow delete: if false; 
+      // Disallow delete; use status changes instead
     }
 
     // Default deny for unmatched paths to ensure security.
