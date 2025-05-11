@@ -114,6 +114,7 @@ export default app;
     *   Upon successful verification, the user's session is established, and `currentUser` in `AuthContext` is updated.
     *   Handles loading states and displays errors.
 *   **Firebase Setup (Authentication > Sign-in method):**
+    *   **Billing Plan:** Phone Authentication requires your Firebase project to be on the Blaze (pay-as-you-go) plan for SMS delivery.
     *   Ensure the "Phone" sign-in provider is **enabled** in your Firebase project.
     *   **Authorized Domains:** For local development with reCAPTCHA, ensure `localhost` is added to the authorized domains list in Firebase Console (Authentication -> Settings -> Authorized domains).
     *   **Test Phone Numbers:** To avoid SMS costs and for easier testing during development, add test phone numbers and their corresponding OTPs in the Firebase Console (Authentication -> Settings -> Phone numbers for testing). For example, phone: `+11234567890`, OTP: `123456`.
@@ -130,4 +131,39 @@ export default app;
 7.  If OTP sending is successful, an OTP input field will appear. Enter the test OTP (e.g., `123456`).
 8.  Click "Verify OTP".
 9.  Upon successful verification, the page should update (e.g., show a welcome message or your user's phone number from `currentUser` in `App.jsx`), and you should see a success message/user object in the console.
-10. Test the logout button. 
+10. Test the logout button. Click "Logout". Verify the user is logged out, redirected to `/login`, and the Navbar updates accordingly.
+
+### 3. Basic Navigation & Homepage (React Router)
+
+*   **Implemented In:**
+    *   `src/App.jsx`: Main router setup using `<BrowserRouter>`, `<Routes>`, `<Route>`.
+    *   `src/pages/HomePage.jsx`: A simple placeholder homepage.
+    *   `src/components/layout/Navbar.jsx`: Navigation bar with conditional links (Home, Login/Logout, Checkout) based on authentication state. Uses `<Link>` from `react-router-dom`.
+    *   `src/components/layout/PageLayout.jsx`: A wrapper component that includes the `Navbar` and provides a consistent layout structure for pages.
+    *   `src/components/common/ProtectedRoute.jsx`: A component to protect routes. If a user is not authenticated, they are redirected to `/login`, storing their intended destination to redirect back after login.
+    *   `src/pages/LoginPage.jsx`: Updated to use `useNavigate` and `useLocation` to redirect the user after successful login, potentially back to a page they were trying to access before logging in.
+*   **Dependencies:** `react-router-dom`
+*   **Functionality:**
+    *   **Routes Defined:**
+        *   `/`: Displays `HomePage.jsx` (within `PageLayout`).
+        *   `/login`: Displays `LoginPage.jsx`. If already logged in, redirects to `/`.
+        *   `/checkout`: Displays `CheckoutPage.jsx` (within `PageLayout`). This route is protected by `ProtectedRoute`, redirecting to `/login` if the user is not authenticated.
+    *   **Navbar:**
+        *   Dynamically updates links based on `currentUser` from `AuthContext`.
+        *   Provides navigation to Home, Checkout (if logged in), and Login/Logout.
+    *   **Protected Routes:**
+        *   The `/checkout` route is an example of a protected route. Access is only granted if `currentUser` exists in `AuthContext`.
+*   **App Name & Logo in Navbar:**
+    *   Currently placeholder text/no logo. These will be made configurable via `theme.js` and `content.js` in a later phase.
+
+**How to Test Navigation:**
+1.  Start the app (`npm run dev`).
+2.  Open the app at the root URL (`/`). You should see `HomePage` and the `Navbar`.
+3.  Navbar should show a "Login" link. Click it; verify it navigates to `/login`.
+4.  Attempt to access `/checkout` directly by typing it in the URL bar. You should be redirected to `/login`.
+5.  Log in via OTP.
+6.  After successful login, you should be redirected (e.g., to `/` or to `/checkout` if that was your last attempted protected route).
+7.  The Navbar should update to show "Checkout" and "Logout" links.
+8.  Click the "Checkout" link. Verify it navigates to `/checkout`.
+9.  Click the "Home" link. Verify it navigates to `/`.
+10. Click "Logout". Verify the user is logged out, redirected to `/login`, and the Navbar updates accordingly. 
