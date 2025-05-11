@@ -1,5 +1,6 @@
 import React from 'react';
 import LoginPage from './pages/LoginPage.jsx';
+import CheckoutPage from './pages/CheckoutPage.jsx';
 import { useAuth } from './contexts/AuthContext.jsx';
 import './App.css';
 
@@ -37,12 +38,10 @@ function App() {
         {!currentUser ? (
           <LoginPage />
         ) : (
-          <div className="p-4 text-center text-lg">
-            Welcome back! Navigate to other pages. (Placeholder for homepage)
-      </div>
+          <CheckoutPage />
         )}
       </main>
-      </div>
+    </div>
   );
 }
 
