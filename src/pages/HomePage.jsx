@@ -1,31 +1,29 @@
 import React from 'react';
-import { useAuth } from '../contexts/AuthContext.jsx'; // To display welcome message
-
-// Later, we'll get appName from contentConfig
-// import { contentConfig } from '../config/content';
+import { useAuth } from '../contexts/AuthContext.jsx';
+import { contentConfig } from '../config/content.js';
 
 const HomePage = () => {
   const { currentUser } = useAuth();
-  // const appName = contentConfig.appName || "My Awesome App"; // Fallback
+  const { headline, subheadline, ctaButtonText } = contentConfig.homePage;
 
   return (
     <div className="flex flex-col items-center justify-center text-center p-10">
-      <h1 className="text-4xl font-bold text-gray-800 mb-4">
-        {/* Welcome to {appName} */}
-        Welcome to Our App!
+      <h1 className="text-4xl font-bold text-text-primary mb-4">
+        {headline}
       </h1>
-      <p className="text-lg text-gray-600 mb-6">
-        This is the homepage. We will make this much more configurable later!
+      <p className="text-lg text-text-secondary mb-6">
+        {subheadline}
       </p>
+      {!currentUser && (
+        <button className="bg-accent text-white px-6 py-3 rounded-md font-semibold hover:opacity-90">
+          {ctaButtonText}
+        </button>
+      )}
       {currentUser ? (
-        <p className="text-md text-green-600">
+        <p className="text-md text-secondary mt-4">
           You are logged in as {currentUser.phoneNumber}.
         </p>
-      ) : (
-        <p className="text-md text-indigo-600">
-          Please log in or sign up to continue.
-        </p>
-      )}
+      ) : null}
     </div>
   );
 };

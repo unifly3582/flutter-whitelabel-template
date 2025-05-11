@@ -1,6 +1,8 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext.jsx';
+import { themeConfig } from '../../config/theme.js';
+import { contentConfig } from '../../config/content.js';
 
 // Later, we'll get appName and logo from themeConfig/contentConfig
 // import { themeConfig } from '../../config/theme'; 
@@ -8,6 +10,8 @@ import { useAuth } from '../../contexts/AuthContext.jsx';
 const Navbar = () => {
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
+  const appDisplayName = contentConfig.appName || themeConfig.appName;
+  const logoPath = themeConfig.logoUrl;
   // const appName = themeConfig.appName || "MyApp"; // Fallback for app name
   // const logoUrl = themeConfig.logoUrl || "/default-logo.png"; // Fallback for logo
 
@@ -23,15 +27,14 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg">
+    <nav className="bg-primary text-white shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
-            <Link to="/" className="flex-shrink-0">
-              {/* <img className="h-8 w-auto mr-2" src={logoUrl} alt="App Logo" /> */}
+            <Link to="/" className="flex-shrink-0 flex items-center">
+              {logoPath && <img className="h-8 w-auto mr-2" src={logoPath} alt={`${appDisplayName} Logo`} />}
               <span className="font-bold text-xl tracking-tight">
-                {/* {appName} */}
-                OurApp {/* Placeholder */}
+                {appDisplayName}
               </span>
             </Link>
           </div>

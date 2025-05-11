@@ -5,10 +5,12 @@ import LoginPage from './pages/LoginPage.jsx';
 import CheckoutPage from './pages/CheckoutPage.jsx';
 import PageLayout from './components/layout/PageLayout.jsx';
 import ProtectedRoute from './components/common/ProtectedRoute.jsx';
+import useThemeApplier from './hooks/useThemeApplier.js';
 import { useAuth } from './contexts/AuthContext.jsx';
 import './App.css';
 
 function App() {
+  useThemeApplier();
   const { loading, currentUser } = useAuth();
 
   if (loading) {
