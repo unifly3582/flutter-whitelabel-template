@@ -39,10 +39,10 @@ function App() {
         ) : (
           <div className="p-4 text-center text-lg">
             Welcome back! Navigate to other pages. (Placeholder for homepage)
-          </div>
+      </div>
         )}
       </main>
-    </div>
+      </div>
   );
 }
 
