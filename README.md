@@ -216,4 +216,36 @@ The goal of this phase is to make the application template easily configurable f
     *   Update `homePage.headline`, `homePage.subheadline`, `homePage.ctaButtonText`.
     *   Add/modify other text strings as the application grows.
 3.  **Rebuild and deploy the application for that client.**
-    *(Note: For true dynamic theming without rebuilds per client using the same codebase, a more advanced setup would be needed, like fetching theme/content from a client-specific Firestore document and applying it. For now, we are customizing at build time for each client deployment).* 
+    *(Note: For true dynamic theming without rebuilds per client using the same codebase, a more advanced setup would be needed, like fetching theme/content from a client-specific Firestore document and applying it. For now, we are customizing at build time for each client deployment).*
+
+### 2.2. Generalizing Frontpage Appearance (Layout Variants)
+
+To allow for more significant variations in the homepage (and potentially other pages) beyond just text and color changes, a system for selecting different layout "variants" has been implemented.
+
+*   **Implemented In:**
+    *   `src/config/layoutConfig.js`: A configuration file where specific layout variants can be chosen for different parts of the application. Example: `{ homePageVariant: 'default' }`.
+    *   `src/pages/home/`: A new directory created to house different homepage layout components.
+        *   `HomePage_Default.jsx`: The original homepage component, now serving as the 'default' variant.
+        *   `HomePage_VariantA.jsx`: An example of an alternative homepage layout component with different styling and structure.
+    *   `src/App.jsx`:
+        *   Modified to use `React.lazy()` for code-splitting different homepage variants. This ensures that only the code for the selected variant is loaded by the client's browser.
+        *   Uses a `switch` statement (or similar logic) to read `layoutConfig.homePageVariant` and dynamically select and render the appropriate homepage component.
+        *   Wraps the routes in `<Suspense>` to provide a fallback UI (e.g., "Loading page...") while a lazy-loaded component is being fetched.
+*   **How it Works:**
+    1.  Multiple distinct React components representing different homepage layouts (e.g., `HomePage_Default.jsx`, `HomePage_VariantA.jsx`) are created within `src/pages/home/`.
+    2.  `src/config/layoutConfig.js` contains a setting (e.g., `homePageVariant`) that specifies which variant to use by its key (e.g., `'default'`, `'variantA'`).
+    3.  The main application router in `App.jsx` reads this configuration value.
+    4.  Based on the value, it dynamically imports (using `React.lazy`) and renders the corresponding homepage component.
+    5.  Each layout variant component can still pull its specific text content from `content.js` (e.g., `content.js` could have sections for `homePageDefaultContent`, `homePageVariantAContent` if needed, or they can share common content).
+*   **Benefits:**
+    *   Allows for significantly different "looks and feels" for the homepage for different clients.
+    *   Code-splitting improves initial load performance as only the necessary layout code is downloaded.
+
+**To Customize Frontpage Appearance for a New Client (Layout Aspect):**
+1.  **Simple Content Change (using existing layout):** Modify relevant texts in `content.js` that are used by the currently active homepage variant (as defined in `layoutConfig.js`).
+2.  **Use a Different Pre-defined Layout:**
+    *   Ensure the desired alternative layout component (e.g., `HomePage_VariantB.jsx`) exists in `src/pages/home/`.
+    *   Ensure `App.jsx` is updated to include this new variant in its `React.lazy` imports and the `switch` statement.
+    *   Modify `src/config/layoutConfig.js` to set `homePageVariant` to the key of the desired layout (e.g., `'variantB'`).
+    *   Ensure `content.js` has any necessary text content structured for that chosen layout variant (if it uses different content keys).
+3.  **Rebuild and deploy the application.** 
