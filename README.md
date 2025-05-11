@@ -166,4 +166,54 @@ export default app;
 7.  The Navbar should update to show "Checkout" and "Logout" links.
 8.  Click the "Checkout" link. Verify it navigates to `/checkout`.
 9.  Click the "Home" link. Verify it navigates to `/`.
-10. Click "Logout". Verify the user is logged out, redirected to `/login`, and the Navbar updates accordingly. 
+10. Click "Logout". Verify the user is logged out, redirected to `/login`, and the Navbar updates accordingly.
+
+## Phase 2: Generalization & Whitelabeling
+
+The goal of this phase is to make the application template easily configurable for different clients, allowing changes to themes, content, and appearance without deep code modifications.
+
+### Strategy Overview:
+
+*   **Client-Specific Firebase Project:** Each client will utilize their own Firebase project for backend services, data isolation, and billing.
+*   **Configuration Files in Codebase:** The template codebase includes dedicated configuration files (`src/config/`) that will be modified for each client before their instance is built and deployed.
+    *   `src/config/theme.js`: Defines visual aspects (colors, fonts, logo URL, border radius, etc.).
+    *   `src/config/content.js`: Defines text strings, titles, and specific content for UI elements (e.g., app name, homepage headlines).
+    *   *(Future) `src/config/layoutConfig.js`: For selecting different pre-defined page layouts.*
+    *   *(Future) `src/config/features.js`: To enable/disable certain features.*
+*   **Deployment Process (Simplified):** For each new client, the template is cloned, configuration files are updated, client's Firebase environment variables are set, and the customized app is built and deployed to their Firebase Hosting.
+
+### 2.1. Theming & Basic Content Customization
+
+*   **Implemented In:**
+    *   `src/config/theme.js`: Stores default theme variables (colors, fonts, logo URL, border radius).
+    *   `src/config/content.js`: Stores default text content (appName, homepage texts).
+    *   `src/hooks/useThemeApplier.js`: A React hook that reads `themeConfig` and dynamically applies its values as CSS custom properties to the HTML `:root` element on application load.
+    *   `src/index.css`: Defines CSS custom properties (e.g., `--color-primary`, `--font-primary`) with fallback default values. The `body` element also gets base styles from these variables.
+    *   `tailwind.config.js`: Extended to use these CSS custom properties (e.g., `colors: { primary: 'var(--color-primary)' }`), allowing Tailwind utility classes to reflect the dynamic theme.
+    *   `public/index.html`: Updated to include links for web fonts specified in `theme.js` (e.g., Google Fonts).
+    *   `src/App.jsx`: Calls `useThemeApplier()` to activate the theme.
+    *   `src/components/layout/Navbar.jsx` and `src/pages/HomePage.jsx`: Updated to consume `appName`, `logoUrl`, and text content from `theme.js` and `content.js`. Other components (e.g., buttons in `LoginPage.jsx`) can now use theme-aware Tailwind classes like `bg-primary`.
+*   **How it Works:**
+    1.  `theme.js` and `content.js` serve as the source of truth for default customizable values.
+    2.  `useThemeApplier` hook reads `themeConfig` on app startup.
+    3.  The hook sets CSS custom properties (e.g., `--color-primary: # SOMEHEXCODE;`) on the `:root` element.
+    4.  Tailwind CSS uses these CSS variables in its configuration, so utility classes like `bg-primary`, `text-text-primary`, `font-primary`, `rounded-lg` adapt to the theme defined in `theme.js`.
+    5.  React components directly import and use values from `content.js` for displayable text and `theme.js` for things like the logo URL or specific app name.
+*   **Logo:**
+    *   A default logo `public/default-logo.png` is used as a placeholder. The `logoUrl` in `theme.js` points to this. For each client, this URL can be updated, or the `default-logo.png` can be replaced with the client's logo before their build.
+*   **Fonts:**
+    *   Font family strings are defined in `theme.js`.
+    *   Corresponding web fonts must be loaded (e.g., via `<link>` tags in `public/index.html` or self-hosted and imported with `@font-face` in CSS).
+
+**To Customize for a New Client (Theme & Content - Current Method):**
+1.  **Modify `src/config/theme.js`:**
+    *   Update `appName`, `logoUrl` (place new logo in `public/` or use an external URL).
+    *   Change `colors` (primary, secondary, accent, background, textPrimary, textSecondary, etc.).
+    *   Change `fontFamily` values (ensure the new fonts are linked in `index.html` or otherwise loaded).
+    *   Adjust `borderRadius` values if needed.
+2.  **Modify `src/config/content.js`:**
+    *   Update `appName` (if used for display distinct from `themeConfig.appName`).
+    *   Update `homePage.headline`, `homePage.subheadline`, `homePage.ctaButtonText`.
+    *   Add/modify other text strings as the application grows.
+3.  **Rebuild and deploy the application for that client.**
+    *(Note: For true dynamic theming without rebuilds per client using the same codebase, a more advanced setup would be needed, like fetching theme/content from a client-specific Firestore document and applying it. For now, we are customizing at build time for each client deployment).* 
