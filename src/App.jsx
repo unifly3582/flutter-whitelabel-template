@@ -6,6 +6,7 @@ import PageLayout from './components/layout/PageLayout.jsx';
 import ProtectedRoute from './components/common/ProtectedRoute.jsx';
 import useThemeApplier from './hooks/useThemeApplier.js';
 import { useAuth } from './contexts/AuthContext.jsx';
+import OrderConfirmationPage from './pages/OrderConfirmationPage.jsx';
 import './App.css';
 import { layoutConfig } from './config/layoutConfig.js';
 
@@ -58,6 +59,16 @@ function App() {
               <ProtectedRoute>
                 <PageLayout>
                   <CheckoutPage />
+                </PageLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/order-confirmation/:orderId"
+            element={
+              <ProtectedRoute>
+                <PageLayout>
+                  <OrderConfirmationPage />
                 </PageLayout>
               </ProtectedRoute>
             }

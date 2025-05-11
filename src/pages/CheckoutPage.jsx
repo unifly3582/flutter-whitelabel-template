@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase';
-// import { useNavigate } from 'react-router-dom'; // We'll add routing later
+import { useNavigate } from 'react-router-dom';
 
 const CheckoutPage = () => {
   const { currentUser } = useAuth();
-  // const navigate = useNavigate(); // For redirecting if not logged in
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -114,7 +114,7 @@ const CheckoutPage = () => {
       const docRef = await addDoc(collection(db, 'orders'), orderData);
       console.log('Order placed successfully with ID: ', docRef.id);
       setOrderMessage(`Success! Your order has been placed. Order ID: ${docRef.id}`);
-      setFormData({ name: '', email: '', fullAddress: '', pincode: '' });
+      navigate(`/order-confirmation/${docRef.id}`);
     } catch (error) {
       console.error('Error placing order: ', error);
       setOrderMessage(`Error: Could not place your order. ${error.message}`);
