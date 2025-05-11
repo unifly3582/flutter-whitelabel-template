@@ -1,6 +1,27 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // TODO: Add your security rules here
+    // Users can only read/update their own user profile document
+    match /users/{userId} {
+      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null; // Or more specific conditions for signup
+    }
+
+    // Example for 'orders' collection
+    // Users can create orders for themselves, and only read/update their own orders
+    match /orders/{orderId} {
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid
+                      // Add further validation, e.g., required fields, status
+                      && request.resource.data.status == 'pending'; 
+      allow read, update: if request.auth != null && resource.data.userId == request.auth.uid;
+      // Generally, disallow delete for orders; use a status field (e.g., 'cancelled') instead.
+      // allow delete: if false; 
+    }
+
+    // Default deny for unmatched paths to ensure security.
+    // Consider if you need a global read for public data later.
+    match /{document=**} {
+      allow read, write: if false;
+    }
   }
 } 
